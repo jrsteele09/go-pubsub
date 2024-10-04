@@ -145,7 +145,6 @@ outer:
 	}
 
 	subscription.Close()
-	fmt.Printf("Read %d messages\n", n)
 }
 
 func Producer(b *pubsub.Broker, wg *sync.WaitGroup, n int, topic string, message string) {
