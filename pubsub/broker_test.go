@@ -68,7 +68,7 @@ func TestBroker_SendLessMessagesAndCloseBroker(t *testing.T) {
 
 		require.NoError(t, b.CreateTopic(topic))
 
-		require.Error(t, b.Publish("non existend topic", []byte("should not be read")))
+		require.Error(t, b.Publish("non existent topic", []byte("should not be read")))
 
 		resultSet1 := make([][]byte, 0)
 		resultSet2 := make([][]byte, 0)
@@ -114,7 +114,7 @@ func TestBroker_PublishingOnAClosedBroker(t *testing.T) {
 	b := pubsub.NewBroker()
 	topic := "test"
 
-	require.Error(t, b.Publish("non existend topic", []byte("should not be read")))
+	require.Error(t, b.Publish("non existent topic", []byte("should not be read")))
 	b.Subscribe(topic, 10)
 
 	b.Close()
