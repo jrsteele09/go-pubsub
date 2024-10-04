@@ -17,7 +17,7 @@ func TestBroker_SendMoreMessagesThanRequired(t *testing.T) {
 		topic := "test"
 		message := "hello"
 
-		require.Error(t, b.Publish("non existend topic", []byte("should not be read")))
+		require.Error(t, b.Publish("non existent topic", []byte("should not be read")))
 
 		require.NoError(t, b.CreateTopic(topic))
 
