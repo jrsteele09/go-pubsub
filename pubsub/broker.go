@@ -7,20 +7,25 @@ import (
 )
 
 var (
+	// ErrBrokerClosed is returned when an action is attempted on a closed broker.
 	ErrBrokerClosed = errors.New("pubsub.broker is closed")
 )
 
+// Broker represents a message broker that manages topics and their subscribers.
 type Broker struct {
-	Topics     map[string]*Topic
-	topicsLock sync.RWMutex
+	Topics     map[string]*Topic // A map of topic names to topics.
+	topicsLock sync.RWMutex      // Mutex to handle concurrent access to the topics.
 }
 
+// NewBroker creates and returns a new instance of Broker.
 func NewBroker() *Broker {
 	return &Broker{
 		Topics: make(map[string]*Topic),
 	}
 }
 
+// Subscribe allows a subscriber to subscribe to a topic with a specified buffer size.
+// It returns a Subscription to the topic or an error if the topic does not exist.
 func (b *Broker) Subscribe(topic string, bufferSize int) (*Subscription, error) {
 	t, ok := b.Topics[topic]
 	if !ok {
@@ -31,6 +36,7 @@ func (b *Broker) Subscribe(topic string, bufferSize int) (*Subscription, error) 
 	return subscription, nil
 }
 
+// CreateTopic creates a new topic in the broker. It returns an error if the topic already exists.
 func (b *Broker) CreateTopic(topic string) error {
 	b.topicsLock.Lock()
 	defer b.topicsLock.Unlock()
@@ -43,6 +49,8 @@ func (b *Broker) CreateTopic(topic string) error {
 	return nil
 }
 
+// Publish sends a message to a specific topic. It returns an error if the topic does not exist
+// or if there is a failure in publishing the message.
 func (b *Broker) Publish(topic string, message []byte) error {
 	b.topicsLock.RLock()
 	defer b.topicsLock.RUnlock()
@@ -60,6 +68,8 @@ func (b *Broker) Publish(topic string, message []byte) error {
 	return nil
 }
 
+// Close gracefully closes all topics managed by the broker, ensuring no more messages
+// can be published or subscribed to.
 func (b *Broker) Close() {
 	for _, t := range b.Topics {
 		t.Close()
