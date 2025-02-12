@@ -8,10 +8,8 @@
 ## Features
 
 - Multiple subscribers can subscribe to a topic and receive messages.
-- Subscribers can specify the number of messages they expect to receive.
 - Supports creating, publishing, and subscribing to multiple topics.
 - Gracefully handles closing of the broker and subscriptions.
-- Error handling for non-existent topics and closed brokers.
 
 ## Installation
 
@@ -64,41 +62,57 @@ func main() {
 package main
 
 import (
-    "fmt"
-    "sync"
-    "github.com/jrsteele09/go-pubsub/pubsub"
+	"fmt"
+	"sync"
+	"time"
+
+	"github.com/jrsteele09/go-pubsub/pubsub"
 )
 
 func main() {
-    broker := pubsub.NewBroker()
-    topic := "example-topic"
-    broker.CreateTopic(topic)
+	broker := pubsub.NewBroker()
+	topic := "example-topic"
+	broker.CreateTopic(topic)
 
-    // Subscribe to the topic, expecting 5 messages
-    subscription, err := broker.Subscribe(topic, 5)
-    if err != nil {
-        fmt.Println("Error subscribing:", err)
-        return
-    }
+	// Subscribe to the topic, expecting 5 messages
+	subscription, err := broker.Subscribe(topic, 5)
+	if err != nil {
+		fmt.Println("Error subscribing:", err)
+		return
+	}
 
-    // Start a goroutine to read messages from the subscription
-    var wg sync.WaitGroup
-    wg.Add(1)
-    go func() {
-        defer wg.Done()
-        for msg := range subscription.ReceivedData {
-            fmt.Println("Received message:", string(msg))
-        }
-    }()
+	// Start a goroutine to read messages from the subscription
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-subscription.SubscriptionDone:
+				return
+			case msg, ok := <-subscription.ReceivedData:
+				if !ok {
+					return
+				}
+				fmt.Println("Received message:", string(msg))
+			}
+		}
+	}()
 
-    // Publish some messages
-    for i := 0; i < 5; i++ {
-        broker.Publish(topic, []byte(fmt.Sprintf("Message %d", i+1)))
-    }
+	// Publish some messages
+	for i := 0; i < 5; i++ {
+		broker.Publish(topic, []byte(fmt.Sprintf("Message %d", i+1)))
+	}
 
-    // Wait for the subscriber to finish processing
-    wg.Wait()
-    broker.Close()
+	// Sleep to enable the subscriber to receive messages
+	time.Sleep(10 * time.Millisecond)
+
+	// Close the subscription
+	subscription.Close()
+
+	// Wait for the subscriber to complete
+	wg.Wait()
+	broker.Close()
 }
 
 ```

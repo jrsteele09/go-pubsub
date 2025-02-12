@@ -13,8 +13,8 @@ var (
 
 // Broker represents a message broker that manages topics and their subscribers.
 type Broker struct {
-	Topics     map[string]*Topic // A map of topic names to topics.
-	topicsLock sync.RWMutex      // Mutex to handle concurrent access to the topics.
+	Topics     map[string]*Topic
+	topicsLock sync.RWMutex
 }
 
 // NewBroker creates and returns a new instance of Broker.

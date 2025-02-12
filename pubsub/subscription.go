@@ -3,10 +3,10 @@ package pubsub
 // Subscription represents a subscriber to a topic. It contains channels for receiving
 // messages and handling subscription completion.
 type Subscription struct {
-	ID               uint64        // Unique ID for the subscription.
-	publishChannel   chan []byte   // Channel where messages are published.
-	ReceivedData     chan []byte   // Channel from which the subscriber receives messages.
-	SubscriptionDone chan struct{} // Channel to signal that the subscription is closed.
+	ID               uint64
+	publishChannel   chan []byte
+	ReceivedData     chan []byte
+	SubscriptionDone chan struct{}
 }
 
 // NewSubscription creates and returns a new Subscription instance. It takes a unique ID,
@@ -28,23 +28,17 @@ func (s *Subscription) start(topicDone chan struct{}) {
 	go func() {
 		for {
 			select {
-			case data, ok := <-s.publishChannel:
-				// If the publish channel is closed, stop the goroutine.
-				if !ok {
+			case data, channelOk := <-s.publishChannel:
+				if !channelOk { // Closed
 					return
 				}
 				s.ReceivedData <- data
-			case <-topicDone:
-				// When the topic is done, close the ReceivedData channel.
+			case <-topicDone: // Topic is done, close the subscription.
 				close(s.ReceivedData)
 				return
-			case <-s.SubscriptionDone:
-				// When the subscription is closed, close the ReceivedData channel.
+			case <-s.SubscriptionDone: // When the subscription is closed, close the ReceivedData channel.
 				close(s.ReceivedData)
 				return
-			case data := <-s.publishChannel:
-				// Deliver the published message to the ReceivedData channel.
-				s.ReceivedData <- data
 			}
 		}
 	}()
